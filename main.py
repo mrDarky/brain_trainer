@@ -4,7 +4,8 @@ import sys
 import logging
 
 # Suppress clipboard warnings before Kivy initialization
-logging.getLogger('Cutbuffer').setLevel(logging.ERROR + 1)
+# Use CRITICAL to completely suppress Cutbuffer logger messages
+logging.getLogger('Cutbuffer').setLevel(logging.CRITICAL)
 
 # Configure Kivy before importing other Kivy modules
 os.environ['KIVY_NO_CONSOLELOG'] = '1'
@@ -262,7 +263,7 @@ class TrainingScreen(Screen):
         self.show_result_popup(result_text)
     
     def show_result_popup(self, result_text):
-        """Show result popup."""
+        """Show result popup with keyboard navigation support."""
         content = BoxLayout(orientation='vertical', padding=10, spacing=10)
         content.add_widget(Label(text=result_text, size_hint=(1, 0.7)))
         
@@ -273,34 +274,44 @@ class TrainingScreen(Screen):
         
         popup = Popup(title='Result', content=content, size_hint=(0.8, 0.4))
         
-        def next_question(instance):
+        def cleanup_and_next():
+            """Unbind keyboard and proceed to next question."""
+            Window.unbind(on_keyboard=handle_keyboard)
             popup.dismiss()
             self.generate_question()
             self.start_timer()
         
-        def end_training(instance):
+        def cleanup_and_end():
+            """Unbind keyboard and end training."""
+            Window.unbind(on_keyboard=handle_keyboard)
             popup.dismiss()
             self.end_training_session()
         
         def handle_keyboard(instance, key, scancode, codepoint, modifier):
-            """Handle keyboard input in popup."""
+            """Handle keyboard input in popup.
+            
+            Note: This handler unbinds itself before taking action to prevent
+            memory leaks and ensure clean lifecycle management.
+            """
             if key == 13:  # Enter key
-                next_question(None)
+                cleanup_and_next()
                 return True
             elif key == 27:  # Escape key
-                end_training(None)
+                cleanup_and_end()
                 return True
             return False
         
-        next_btn.bind(on_press=next_question)
-        end_btn.bind(on_press=end_training)
+        # Button handlers use the same cleanup functions
+        next_btn.bind(on_press=lambda instance: cleanup_and_next())
+        end_btn.bind(on_press=lambda instance: cleanup_and_end())
         
         btn_layout.add_widget(next_btn)
         btn_layout.add_widget(end_btn)
         content.add_widget(btn_layout)
         
-        # Bind keyboard to popup
+        # Bind keyboard when popup opens
         popup.bind(on_open=lambda instance: Window.bind(on_keyboard=handle_keyboard))
+        # Also unbind on dismiss as a safety measure (for programmatic dismissals)
         popup.bind(on_dismiss=lambda instance: Window.unbind(on_keyboard=handle_keyboard))
         
         popup.open()
