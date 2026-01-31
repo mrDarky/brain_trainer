@@ -1,7 +1,25 @@
 """Brain Training App - Main application file."""
+import os
+import logging
+
+# Suppress clipboard warnings before Kivy initialization
+# Use CRITICAL to completely suppress Cutbuffer logger messages
+logging.getLogger('Cutbuffer').setLevel(logging.CRITICAL)
+
+# Configure Kivy before importing other Kivy modules
+os.environ['KIVY_NO_CONSOLELOG'] = '1'
+os.environ['KIVY_CLIPBOARD'] = 'dummy'  # Use dummy clipboard to avoid xclip dependency
+
+from kivy import Config
+# Don't exit on escape, we'll handle it ourselves
+Config.set('kivy', 'exit_on_escape', '0')
+# Set log level to warning to suppress info messages
+Config.set('kivy', 'log_level', 'warning')
+
 import random
 import time
 from kivy.app import App
+from kivy.core.window import Window
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
@@ -14,6 +32,10 @@ from kivy.clock import Clock
 from kivy.properties import StringProperty, NumericProperty, BooleanProperty
 from kivy.core.audio import SoundLoader
 from database import Database
+
+# Keyboard key codes
+KEYCODE_ENTER = 13
+KEYCODE_ESCAPE = 27
 
 # Text-to-speech support
 try:
@@ -244,32 +266,65 @@ class TrainingScreen(Screen):
         self.show_result_popup(result_text)
     
     def show_result_popup(self, result_text):
-        """Show result popup."""
+        """Show result popup with keyboard navigation support."""
         content = BoxLayout(orientation='vertical', padding=10, spacing=10)
         content.add_widget(Label(text=result_text, size_hint=(1, 0.7)))
         
         btn_layout = BoxLayout(size_hint=(1, 0.3), spacing=10)
         
-        next_btn = Button(text='Next Question')
-        end_btn = Button(text='End Training')
+        next_btn = Button(text='Next Question (Enter)')
+        end_btn = Button(text='End Training (Esc)')
         
         popup = Popup(title='Result', content=content, size_hint=(0.8, 0.4))
         
-        def next_question(instance):
+        # Track if handler is bound to prevent double unbinding
+        handler_bound = [True]  # Use list for mutable closure variable
+        
+        def unbind_handler():
+            """Safely unbind the keyboard handler if still bound."""
+            if handler_bound[0]:
+                Window.unbind(on_keyboard=handle_keyboard)
+                handler_bound[0] = False
+        
+        def cleanup_and_next():
+            """Unbind keyboard and proceed to next question."""
+            unbind_handler()
             popup.dismiss()
             self.generate_question()
             self.start_timer()
         
-        def end_training(instance):
+        def cleanup_and_end():
+            """Unbind keyboard and end training."""
+            unbind_handler()
             popup.dismiss()
             self.end_training_session()
         
-        next_btn.bind(on_press=next_question)
-        end_btn.bind(on_press=end_training)
+        def handle_keyboard(instance, key, scancode, codepoint, modifier):
+            """Handle keyboard input in popup.
+            
+            Note: This handler unbinds itself before taking action to prevent
+            memory leaks and ensure clean lifecycle management.
+            """
+            if key == KEYCODE_ENTER:
+                cleanup_and_next()
+                return True
+            elif key == KEYCODE_ESCAPE:
+                cleanup_and_end()
+                return True
+            return False
+        
+        # Button handlers use the same cleanup functions
+        next_btn.bind(on_press=lambda instance: cleanup_and_next())
+        end_btn.bind(on_press=lambda instance: cleanup_and_end())
         
         btn_layout.add_widget(next_btn)
         btn_layout.add_widget(end_btn)
         content.add_widget(btn_layout)
+        
+        # Bind keyboard immediately (before popup opens) to handle all cases
+        Window.bind(on_keyboard=handle_keyboard)
+        # Unbind on dismiss as safety cleanup for any programmatic dismissals
+        popup.bind(on_dismiss=lambda instance: unbind_handler())
         
         popup.open()
     
@@ -298,8 +353,13 @@ class TrainingScreen(Screen):
         app = App.get_running_app()
         app.root.current = 'main'
     
+    def on_enter(self):
+        """Called when entering the screen."""
+        Window.bind(on_keyboard=self.handle_keyboard)
+    
     def on_leave(self):
         """Called when leaving the screen."""
+        Window.unbind(on_keyboard=self.handle_keyboard)
         if self.timer_event:
             self.timer_event.cancel()
         
@@ -308,6 +368,13 @@ class TrainingScreen(Screen):
             self.current_sound.stop()
         if self.current_temp_file:
             self._cleanup_temp_file(self.current_temp_file)
+    
+    def handle_keyboard(self, instance, key, scancode, codepoint, modifier):
+        """Handle keyboard input during training."""
+        if key == KEYCODE_ESCAPE:
+            self.end_training_session()
+            return True
+        return False
 
 
 class SettingsScreen(Screen):
