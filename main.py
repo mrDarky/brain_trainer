@@ -1,7 +1,25 @@
 """Brain Training App - Main application file."""
+import os
+import sys
+import logging
+
+# Suppress clipboard warnings before Kivy initialization
+logging.getLogger('Cutbuffer').setLevel(logging.ERROR + 1)
+
+# Configure Kivy before importing other Kivy modules
+os.environ['KIVY_NO_CONSOLELOG'] = '1'
+os.environ['KIVY_CLIPBOARD'] = 'dummy'  # Use dummy clipboard to avoid xclip dependency
+
+from kivy import Config
+# Don't exit on escape, we'll handle it ourselves
+Config.set('kivy', 'exit_on_escape', '0')
+# Set log level to warning to suppress info messages
+Config.set('kivy', 'log_level', 'warning')
+
 import random
 import time
 from kivy.app import App
+from kivy.core.window import Window
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
@@ -250,8 +268,8 @@ class TrainingScreen(Screen):
         
         btn_layout = BoxLayout(size_hint=(1, 0.3), spacing=10)
         
-        next_btn = Button(text='Next Question')
-        end_btn = Button(text='End Training')
+        next_btn = Button(text='Next Question (Enter)')
+        end_btn = Button(text='End Training (Esc)')
         
         popup = Popup(title='Result', content=content, size_hint=(0.8, 0.4))
         
@@ -264,12 +282,26 @@ class TrainingScreen(Screen):
             popup.dismiss()
             self.end_training_session()
         
+        def handle_keyboard(instance, key, scancode, codepoint, modifier):
+            """Handle keyboard input in popup."""
+            if key == 13:  # Enter key
+                next_question(None)
+                return True
+            elif key == 27:  # Escape key
+                end_training(None)
+                return True
+            return False
+        
         next_btn.bind(on_press=next_question)
         end_btn.bind(on_press=end_training)
         
         btn_layout.add_widget(next_btn)
         btn_layout.add_widget(end_btn)
         content.add_widget(btn_layout)
+        
+        # Bind keyboard to popup
+        popup.bind(on_open=lambda instance: Window.bind(on_keyboard=handle_keyboard))
+        popup.bind(on_dismiss=lambda instance: Window.unbind(on_keyboard=handle_keyboard))
         
         popup.open()
     
@@ -298,8 +330,13 @@ class TrainingScreen(Screen):
         app = App.get_running_app()
         app.root.current = 'main'
     
+    def on_enter(self):
+        """Called when entering the screen."""
+        Window.bind(on_keyboard=self.handle_keyboard)
+    
     def on_leave(self):
         """Called when leaving the screen."""
+        Window.unbind(on_keyboard=self.handle_keyboard)
         if self.timer_event:
             self.timer_event.cancel()
         
@@ -308,6 +345,13 @@ class TrainingScreen(Screen):
             self.current_sound.stop()
         if self.current_temp_file:
             self._cleanup_temp_file(self.current_temp_file)
+    
+    def handle_keyboard(self, instance, key, scancode, codepoint, modifier):
+        """Handle keyboard input during training."""
+        if key == 27:  # Escape key - stop training
+            self.end_training_session()
+            return True
+        return False
 
 
 class SettingsScreen(Screen):
