@@ -1,6 +1,5 @@
 """Brain Training App - Main application file."""
 import os
-import sys
 import logging
 
 # Suppress clipboard warnings before Kivy initialization
@@ -34,6 +33,10 @@ from kivy.properties import StringProperty, NumericProperty, BooleanProperty
 from kivy.core.audio import SoundLoader
 from database import Database
 
+# Keyboard key codes
+KEYCODE_ENTER = 13
+KEYCODE_ESCAPE = 27
+
 # Text-to-speech support
 try:
     from gtts import gTTS
@@ -42,6 +45,7 @@ try:
     TTS_AVAILABLE = True
 except ImportError:
     TTS_AVAILABLE = False
+
 
 
 class MainScreen(Screen):
@@ -293,10 +297,10 @@ class TrainingScreen(Screen):
             Note: This handler unbinds itself before taking action to prevent
             memory leaks and ensure clean lifecycle management.
             """
-            if key == 13:  # Enter key
+            if key == KEYCODE_ENTER:
                 cleanup_and_next()
                 return True
-            elif key == 27:  # Escape key
+            elif key == KEYCODE_ESCAPE:
                 cleanup_and_end()
                 return True
             return False
@@ -309,9 +313,9 @@ class TrainingScreen(Screen):
         btn_layout.add_widget(end_btn)
         content.add_widget(btn_layout)
         
-        # Bind keyboard when popup opens
-        popup.bind(on_open=lambda instance: Window.bind(on_keyboard=handle_keyboard))
-        # Also unbind on dismiss as a safety measure (for programmatic dismissals)
+        # Bind keyboard immediately (before popup opens) to handle all cases
+        Window.bind(on_keyboard=handle_keyboard)
+        # Unbind on dismiss as cleanup
         popup.bind(on_dismiss=lambda instance: Window.unbind(on_keyboard=handle_keyboard))
         
         popup.open()
@@ -359,7 +363,7 @@ class TrainingScreen(Screen):
     
     def handle_keyboard(self, instance, key, scancode, codepoint, modifier):
         """Handle keyboard input during training."""
-        if key == 27:  # Escape key - stop training
+        if key == KEYCODE_ESCAPE:
             self.end_training_session()
             return True
         return False
