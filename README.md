@@ -55,7 +55,7 @@ python main.py
 
 - Python 3.7+
 - Kivy 2.3.0
-- pyttsx3 2.90 (for voice support)
+- gTTS 2.5.0 (for voice support)
 
 ## Database
 
