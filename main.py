@@ -12,11 +12,14 @@ from kivy.uix.checkbox import CheckBox
 from kivy.uix.popup import Popup
 from kivy.clock import Clock
 from kivy.properties import StringProperty, NumericProperty, BooleanProperty
+from kivy.core.audio import SoundLoader
 from database import Database
 
 # Text-to-speech support
 try:
-    import pyttsx3
+    from gtts import gTTS
+    import os
+    import tempfile
     TTS_AVAILABLE = True
 except ImportError:
     TTS_AVAILABLE = False
@@ -107,14 +110,8 @@ class TrainingScreen(Screen):
         self.total_questions = 0
         self.correct_answers = 0
         self.timer_event = None
-        self.tts_engine = None
-        
-        # Initialize TTS if available
-        if TTS_AVAILABLE:
-            try:
-                self.tts_engine = pyttsx3.init()
-            except Exception:
-                self.tts_engine = None
+        self.current_sound = None
+        self.current_temp_file = None
     
     def setup_training(self, difficulty, time_per_question):
         """Setup training parameters."""
@@ -160,14 +157,52 @@ class TrainingScreen(Screen):
         self.question_text = f"{self.current_num1} x {self.current_num2} = ?"
         self.score_text = f"Score: {self.correct_answers}/{self.total_questions}"
         
+        # Clean up previous audio if still playing
+        if self.current_sound:
+            self.current_sound.stop()
+        if self.current_temp_file:
+            self._cleanup_temp_file(self.current_temp_file)
+        
         # Speak the question if voice is enabled
         app = App.get_running_app()
-        if app.voice_enabled and self.tts_engine:
+        if app.voice_enabled and TTS_AVAILABLE:
             try:
-                self.tts_engine.say(f"{self.current_num1} times {self.current_num2}")
-                self.tts_engine.runAndWait()
+                # Create speech text
+                speech_text = f"{self.current_num1} times {self.current_num2}"
+                
+                # Generate speech audio file
+                tts = gTTS(text=speech_text, lang='en', slow=False)
+                
+                # Save to temporary file
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as fp:
+                    temp_file = fp.name
+                    tts.save(temp_file)
+                
+                # Play the audio file using Kivy's SoundLoader
+                sound = SoundLoader.load(temp_file)
+                if sound:
+                    self.current_sound = sound
+                    self.current_temp_file = temp_file
+                    
+                    # Bind to on_stop event to clean up after playback
+                    sound.bind(on_stop=lambda instance: self._cleanup_temp_file(temp_file))
+                    sound.play()
+                else:
+                    # If sound loading fails, clean up immediately
+                    self._cleanup_temp_file(temp_file)
             except Exception:
+                # Silently fail if TTS doesn't work
                 pass
+    
+    def _cleanup_temp_file(self, filepath):
+        """Clean up temporary audio file."""
+        try:
+            if os.path.exists(filepath):
+                os.remove(filepath)
+            if self.current_temp_file == filepath:
+                self.current_temp_file = None
+        except Exception:
+            pass
     
     def start_timer(self):
         """Start the countdown timer."""
@@ -243,6 +278,12 @@ class TrainingScreen(Screen):
         if self.timer_event:
             self.timer_event.cancel()
         
+        # Clean up audio
+        if self.current_sound:
+            self.current_sound.stop()
+        if self.current_temp_file:
+            self._cleanup_temp_file(self.current_temp_file)
+        
         # Save to database
         if self.total_questions > 0:
             db = Database()
@@ -261,6 +302,12 @@ class TrainingScreen(Screen):
         """Called when leaving the screen."""
         if self.timer_event:
             self.timer_event.cancel()
+        
+        # Clean up audio
+        if self.current_sound:
+            self.current_sound.stop()
+        if self.current_temp_file:
+            self._cleanup_temp_file(self.current_temp_file)
 
 
 class SettingsScreen(Screen):
