@@ -1,0 +1,240 @@
+#:kivy 2.3.0
+
+<MainScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 20
+        spacing: 20
+        
+        Label:
+            text: 'Brain Trainer'
+            font_size: '32sp'
+            size_hint_y: 0.2
+            bold: True
+        
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: 0.5
+            padding: 10
+            
+            Label:
+                text: 'Statistics'
+                font_size: '24sp'
+                size_hint_y: 0.2
+                bold: True
+            
+            Label:
+                text: root.stats_text
+                font_size: '18sp'
+                size_hint_y: 0.8
+        
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: 0.3
+            spacing: 10
+            
+            Button:
+                text: 'New Training'
+                font_size: '20sp'
+                on_press: app.root.current = 'new_train'
+            
+            Button:
+                text: 'Settings'
+                font_size: '20sp'
+                on_press: app.root.current = 'settings'
+
+
+<NewTrainScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 20
+        spacing: 20
+        
+        Label:
+            text: 'New Training Session'
+            font_size: '28sp'
+            size_hint_y: 0.15
+            bold: True
+        
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: 0.7
+            spacing: 15
+            
+            Label:
+                text: 'Select Difficulty:'
+                font_size: '20sp'
+                size_hint_y: 0.15
+            
+            Spinner:
+                id: difficulty_spinner
+                text: 'Easy'
+                values: ['Easy', 'Medium', 'Hard', 'Custom']
+                font_size: '18sp'
+                size_hint_y: 0.15
+                on_text: root.set_difficulty(self.text)
+            
+            Label:
+                text: 'Time per question (seconds):'
+                font_size: '20sp'
+                size_hint_y: 0.15
+            
+            TextInput:
+                id: time_input
+                text: '10'
+                multiline: False
+                input_filter: 'int'
+                font_size: '18sp'
+                size_hint_y: 0.15
+                on_text: root.set_time(self.text)
+            
+            BoxLayout:
+                id: custom_range_box
+                orientation: 'vertical'
+                size_hint_y: 0.4
+                spacing: 10
+                opacity: 1 if difficulty_spinner.text == 'Custom' else 0
+                disabled: difficulty_spinner.text != 'Custom'
+                
+                Label:
+                    text: 'Custom Range'
+                    font_size: '18sp'
+                
+                BoxLayout:
+                    spacing: 10
+                    
+                    Label:
+                        text: 'Min:'
+                        size_hint_x: 0.2
+                    
+                    TextInput:
+                        id: min_range_input
+                        text: '0'
+                        multiline: False
+                        input_filter: 'int'
+                        size_hint_x: 0.3
+                    
+                    Label:
+                        text: 'Max:'
+                        size_hint_x: 0.2
+                    
+                    TextInput:
+                        id: max_range_input
+                        text: '10'
+                        multiline: False
+                        input_filter: 'int'
+                        size_hint_x: 0.3
+        
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: 0.15
+            spacing: 10
+            
+            Button:
+                text: 'Back'
+                font_size: '20sp'
+                on_press: app.root.current = 'main'
+            
+            Button:
+                text: 'Start Training'
+                font_size: '20sp'
+                on_press: 
+                    root.start_training() if difficulty_spinner.text != 'Custom' else app.root.get_screen('training').setup_custom_training(int(min_range_input.text or 0), int(max_range_input.text or 10), int(time_input.text or 10)) if difficulty_spinner.text == 'Custom' else None
+                    app.root.current = 'training' if difficulty_spinner.text == 'Custom' else app.root.current
+
+
+<TrainingScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 20
+        spacing: 20
+        
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: 0.15
+            
+            Label:
+                text: root.timer_text
+                font_size: '24sp'
+                size_hint_x: 0.5
+            
+            Label:
+                text: root.score_text
+                font_size: '24sp'
+                size_hint_x: 0.5
+        
+        Label:
+            text: root.question_text
+            font_size: '48sp'
+            size_hint_y: 0.4
+            bold: True
+        
+        TextInput:
+            id: answer_input
+            hint_text: 'Enter your answer'
+            multiline: False
+            input_filter: 'int'
+            font_size: '32sp'
+            size_hint_y: 0.2
+        
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: 0.15
+            spacing: 10
+            
+            Button:
+                text: 'Submit'
+                font_size: '24sp'
+                on_press:
+                    root.check_answer(answer_input.text)
+                    answer_input.text = ''
+            
+            Button:
+                text: 'End Training'
+                font_size: '24sp'
+                on_press: root.end_training_session()
+
+
+<SettingsScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 20
+        spacing: 20
+        
+        Label:
+            text: 'Settings'
+            font_size: '28sp'
+            size_hint_y: 0.15
+            bold: True
+        
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: 0.7
+            spacing: 20
+            padding: 10
+            
+            BoxLayout:
+                orientation: 'horizontal'
+                size_hint_y: 0.3
+                
+                Label:
+                    text: 'Enable Voice (Text-to-Speech):'
+                    font_size: '20sp'
+                    size_hint_x: 0.7
+                
+                CheckBox:
+                    size_hint_x: 0.3
+                    active: app.voice_enabled
+                    on_active: app.voice_enabled = self.active
+            
+            Label:
+                text: 'Voice feature will speak the question\nif enabled and supported on your system.'
+                font_size: '16sp'
+                size_hint_y: 0.7
+                color: 0.7, 0.7, 0.7, 1
+        
+        Button:
+            text: 'Back to Main Menu'
+            font_size: '20sp'
+            size_hint_y: 0.15
+            on_press: app.root.current = 'main'
