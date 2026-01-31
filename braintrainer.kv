@@ -174,6 +174,9 @@
             input_filter: 'int'
             font_size: '32sp'
             size_hint_y: 0.2
+            on_text_validate:
+                root.check_answer(self.text)
+                self.text = ''
         
         BoxLayout:
             orientation: 'horizontal'
