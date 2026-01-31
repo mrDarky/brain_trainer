@@ -37,6 +37,9 @@ from database import Database
 KEYCODE_ENTER = 13
 KEYCODE_ESCAPE = 27
 
+# UI timing constants
+FOCUS_DELAY = 0.1  # Small delay to ensure UI is ready before setting focus
+
 # Text-to-speech support
 try:
     from gtts import gTTS
@@ -217,7 +220,7 @@ class TrainingScreen(Screen):
                 pass
         
         # Set focus on answer input field
-        Clock.schedule_once(lambda dt: self.focus_answer_input(), 0.1)
+        Clock.schedule_once(lambda dt: self.focus_answer_input(), FOCUS_DELAY)
     
     def _cleanup_temp_file(self, filepath):
         """Clean up temporary audio file."""
@@ -261,11 +264,12 @@ class TrainingScreen(Screen):
         
         if user_answer == self.correct_answer:
             self.correct_answers += 1
-            # For correct answers, automatically go to next question
+            # For correct answers, automatically go to next question without popup
+            # This provides faster feedback and keeps the training flow smooth
             self.generate_question()
             self.start_timer()
         else:
-            # For wrong answers, show popup with correct answer
+            # For wrong answers, show popup with correct answer and wait for user action
             result_text = f"Wrong! The answer was {self.correct_answer}"
             self.show_result_popup(result_text)
     
@@ -361,7 +365,7 @@ class TrainingScreen(Screen):
         """Called when entering the screen."""
         Window.bind(on_keyboard=self.handle_keyboard)
         # Set focus on answer input field when entering the screen
-        Clock.schedule_once(lambda dt: self.focus_answer_input(), 0.1)
+        Clock.schedule_once(lambda dt: self.focus_answer_input(), FOCUS_DELAY)
     
     def focus_answer_input(self):
         """Set focus on the answer input field."""
