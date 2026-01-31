@@ -47,7 +47,6 @@ except ImportError:
     TTS_AVAILABLE = False
 
 
-
 class MainScreen(Screen):
     """Main menu screen with statistics."""
     
@@ -278,16 +277,25 @@ class TrainingScreen(Screen):
         
         popup = Popup(title='Result', content=content, size_hint=(0.8, 0.4))
         
+        # Track if handler is bound to prevent double unbinding
+        handler_bound = [True]  # Use list for mutable closure variable
+        
+        def unbind_handler():
+            """Safely unbind the keyboard handler if still bound."""
+            if handler_bound[0]:
+                Window.unbind(on_keyboard=handle_keyboard)
+                handler_bound[0] = False
+        
         def cleanup_and_next():
             """Unbind keyboard and proceed to next question."""
-            Window.unbind(on_keyboard=handle_keyboard)
+            unbind_handler()
             popup.dismiss()
             self.generate_question()
             self.start_timer()
         
         def cleanup_and_end():
             """Unbind keyboard and end training."""
-            Window.unbind(on_keyboard=handle_keyboard)
+            unbind_handler()
             popup.dismiss()
             self.end_training_session()
         
@@ -315,8 +323,8 @@ class TrainingScreen(Screen):
         
         # Bind keyboard immediately (before popup opens) to handle all cases
         Window.bind(on_keyboard=handle_keyboard)
-        # Unbind on dismiss as cleanup
-        popup.bind(on_dismiss=lambda instance: Window.unbind(on_keyboard=handle_keyboard))
+        # Unbind on dismiss as safety cleanup for any programmatic dismissals
+        popup.bind(on_dismiss=lambda instance: unbind_handler())
         
         popup.open()
     
