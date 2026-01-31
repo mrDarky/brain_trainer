@@ -67,7 +67,23 @@ class NewTrainScreen(Screen):
         """Start the training session."""
         app = App.get_running_app()
         training_screen = app.root.get_screen('training')
-        training_screen.setup_training(self.difficulty, self.time_per_question)
+        
+        if self.difficulty == 'Custom':
+            # Get custom range values from UI
+            min_input = self.ids.get('min_range_input')
+            max_input = self.ids.get('max_range_input')
+            
+            try:
+                min_range = int(min_input.text) if min_input and min_input.text else 0
+                max_range = int(max_input.text) if max_input and max_input.text else 10
+            except (ValueError, AttributeError):
+                min_range = 0
+                max_range = 10
+            
+            training_screen.setup_custom_training(min_range, max_range, self.time_per_question)
+        else:
+            training_screen.setup_training(self.difficulty, self.time_per_question)
+        
         app.root.current = 'training'
 
 
@@ -97,7 +113,7 @@ class TrainingScreen(Screen):
         if TTS_AVAILABLE:
             try:
                 self.tts_engine = pyttsx3.init()
-            except:
+            except Exception:
                 self.tts_engine = None
     
     def setup_training(self, difficulty, time_per_question):
@@ -150,7 +166,7 @@ class TrainingScreen(Screen):
             try:
                 self.tts_engine.say(f"{self.current_num1} times {self.current_num2}")
                 self.tts_engine.runAndWait()
-            except:
+            except Exception:
                 pass
     
     def start_timer(self):
