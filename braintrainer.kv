@@ -372,6 +372,7 @@
             TextInput:
                 id: answer_input
                 hint_text: 'Enter your answer'
+                hint_text_color: app.get_color('text_secondary')
                 multiline: False
                 input_filter: 'int'
                 font_size: '36sp'
@@ -380,7 +381,6 @@
                 foreground_color: app.get_color('text_primary')
                 cursor_color: app.get_color('accent')
                 padding: [20, 15]
-                hint_text_color: app.get_color('text_secondary')
                 on_text_validate:
                     root.check_answer(self.text)
                     self.text = ''
@@ -553,7 +553,7 @@
                         on_active: app.voice_enabled = self.active
                 
                 Label:
-                    text: 'Voice feature will speak the question\nif enabled and supported on your system'
+                    text: 'Voice feature will speak the question if enabled and supported on your system'
                     font_size: '16sp'
                     size_hint_y: 0.5
                     color: app.get_color('text_secondary')
