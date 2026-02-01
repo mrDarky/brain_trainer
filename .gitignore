@@ -63,6 +63,9 @@ venv.bak/
 *.db
 *.sqlite
 
+# User settings
+brain_trainer_settings.json
+
 # OS
 .DS_Store
 Thumbs.db

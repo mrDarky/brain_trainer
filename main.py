@@ -29,9 +29,10 @@ from kivy.uix.spinner import Spinner
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.popup import Popup
 from kivy.clock import Clock
-from kivy.properties import StringProperty, NumericProperty, BooleanProperty
+from kivy.properties import StringProperty, NumericProperty, BooleanProperty, DictProperty
 from kivy.core.audio import SoundLoader
 from database import Database
+import json
 
 # Keyboard key codes
 KEYCODE_ENTER = 13
@@ -406,9 +407,74 @@ class BrainTrainerApp(App):
     """Main application class."""
     
     voice_enabled = BooleanProperty(False)
+    theme_mode = StringProperty('light')  # 'light' or 'dark'
+    
+    # Theme colors
+    theme_colors = DictProperty({
+        'light': {
+            'bg_primary': [0.96, 0.97, 0.98, 1],      # Very light gray-blue
+            'bg_secondary': [1, 1, 1, 1],              # White
+            'bg_card': [1, 1, 1, 1],                   # White
+            'text_primary': [0.13, 0.13, 0.13, 1],     # Dark gray
+            'text_secondary': [0.4, 0.4, 0.4, 1],      # Medium gray
+            'button_bg': [0.2, 0.51, 0.96, 1],         # Modern blue
+            'button_text': [1, 1, 1, 1],               # White
+            'button_bg_alt': [0.29, 0.76, 0.55, 1],    # Modern green
+            'accent': [0.5, 0.31, 0.94, 1],            # Purple accent
+            'border': [0.88, 0.89, 0.9, 1],            # Light border
+        },
+        'dark': {
+            'bg_primary': [0.11, 0.11, 0.13, 1],       # Very dark gray
+            'bg_secondary': [0.15, 0.15, 0.17, 1],     # Dark gray
+            'bg_card': [0.18, 0.18, 0.21, 1],          # Card background
+            'text_primary': [0.95, 0.95, 0.96, 1],     # Almost white
+            'text_secondary': [0.65, 0.65, 0.67, 1],   # Light gray
+            'button_bg': [0.27, 0.53, 0.95, 1],        # Modern blue
+            'button_text': [1, 1, 1, 1],               # White
+            'button_bg_alt': [0.29, 0.76, 0.55, 1],    # Modern green
+            'accent': [0.58, 0.42, 0.95, 1],           # Purple accent
+            'border': [0.25, 0.25, 0.28, 1],           # Dark border
+        }
+    })
+    
+    def get_color(self, color_key):
+        """Get color for the current theme."""
+        return self.theme_colors[self.theme_mode].get(color_key, [1, 1, 1, 1])
+    
+    def toggle_theme(self):
+        """Toggle between light and dark theme."""
+        self.theme_mode = 'dark' if self.theme_mode == 'light' else 'light'
+        self.save_settings()
+    
+    def load_settings(self):
+        """Load settings from file."""
+        try:
+            with open('brain_trainer_settings.json', 'r') as f:
+                settings = json.load(f)
+                self.voice_enabled = settings.get('voice_enabled', False)
+                self.theme_mode = settings.get('theme_mode', 'light')
+        except (FileNotFoundError, json.JSONDecodeError):
+            # Use defaults
+            pass
+    
+    def save_settings(self):
+        """Save settings to file."""
+        settings = {
+            'voice_enabled': self.voice_enabled,
+            'theme_mode': self.theme_mode
+        }
+        with open('brain_trainer_settings.json', 'w') as f:
+            json.dump(settings, f)
+    
+    def on_voice_enabled(self, instance, value):
+        """Called when voice_enabled changes."""
+        self.save_settings()
     
     def build(self):
         """Build the application."""
+        # Load settings
+        self.load_settings()
+        
         # Create screen manager
         sm = ScreenManager()
         
