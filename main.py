@@ -37,6 +37,9 @@ from database import Database
 KEYCODE_ENTER = 13
 KEYCODE_ESCAPE = 27
 
+# UI timing constants
+FOCUS_DELAY = 0.1  # Small delay to ensure UI is ready before setting focus
+
 # Text-to-speech support
 try:
     from gtts import gTTS
@@ -215,6 +218,9 @@ class TrainingScreen(Screen):
             except Exception:
                 # Silently fail if TTS doesn't work
                 pass
+        
+        # Set focus on answer input field
+        Clock.schedule_once(lambda dt: self.focus_answer_input(), FOCUS_DELAY)
     
     def _cleanup_temp_file(self, filepath):
         """Clean up temporary audio file."""
@@ -258,12 +264,14 @@ class TrainingScreen(Screen):
         
         if user_answer == self.correct_answer:
             self.correct_answers += 1
-            result_text = "Correct!"
+            # For correct answers, automatically go to next question without popup
+            # This provides faster feedback and keeps the training flow smooth
+            self.generate_question()
+            self.start_timer()
         else:
+            # For wrong answers, show popup with correct answer and wait for user action
             result_text = f"Wrong! The answer was {self.correct_answer}"
-        
-        # Show result popup
-        self.show_result_popup(result_text)
+            self.show_result_popup(result_text)
     
     def show_result_popup(self, result_text):
         """Show result popup with keyboard navigation support."""
@@ -356,6 +364,13 @@ class TrainingScreen(Screen):
     def on_enter(self):
         """Called when entering the screen."""
         Window.bind(on_keyboard=self.handle_keyboard)
+        # Set focus on answer input field when entering the screen
+        Clock.schedule_once(lambda dt: self.focus_answer_input(), FOCUS_DELAY)
+    
+    def focus_answer_input(self):
+        """Set focus on the answer input field."""
+        if hasattr(self, 'ids') and 'answer_input' in self.ids:
+            self.ids.answer_input.focus = True
     
     def on_leave(self):
         """Called when leaving the screen."""
