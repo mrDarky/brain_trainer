@@ -579,3 +579,82 @@
                     size: self.size
                     radius: [12, 12, 12, 12]
             on_press: app.root.current = 'main'
+
+
+<ResultsScreen>:
+    canvas.before:
+        Color:
+            rgba: app.get_color('bg_primary')
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    
+    BoxLayout:
+        orientation: 'vertical'
+        padding: 30
+        spacing: 20
+        
+        # Title
+        BoxLayout:
+            size_hint_y: 0.12
+            canvas.before:
+                Color:
+                    rgba: app.get_color('bg_card')
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [15, 15, 15, 15]
+            
+            Label:
+                text: '📊 Training Results'
+                font_size: '30sp'
+                bold: True
+                color: app.get_color('accent')
+        
+        # Results scrollable area
+        ScrollView:
+            size_hint_y: 0.73
+            do_scroll_x: False
+            do_scroll_y: True
+            
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: None
+                height: self.minimum_height
+                padding: 25
+                spacing: 10
+                canvas.before:
+                    Color:
+                        rgba: app.get_color('bg_card')
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [20, 20, 20, 20]
+                
+                Label:
+                    text: root.results_text
+                    font_size: '16sp'
+                    size_hint_y: None
+                    height: self.texture_size[1]
+                    text_size: self.width, None
+                    color: app.get_color('text_primary')
+                    halign: 'left'
+                    valign: 'top'
+        
+        # Back button
+        Button:
+            text: '◀ Back to Main Menu'
+            font_size: '22sp'
+            size_hint_y: 0.15
+            bold: True
+            background_normal: ''
+            background_color: app.get_color('button_bg')
+            color: app.get_color('button_text')
+            canvas.before:
+                Color:
+                    rgba: self.background_color if self.state == 'normal' else [c * 0.8 for c in self.background_color]
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [12, 12, 12, 12]
+            on_press: app.root.current = 'main'
