@@ -1,104 +1,211 @@
 #:kivy 2.3.0
 
 <MainScreen>:
+    canvas.before:
+        Color:
+            rgba: app.get_color('bg_primary')
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    
     BoxLayout:
         orientation: 'vertical'
-        padding: 20
+        padding: 30
         spacing: 20
         
-        Label:
-            text: 'Brain Trainer'
-            font_size: '32sp'
+        # Title with modern styling
+        BoxLayout:
             size_hint_y: 0.2
-            bold: True
+            canvas.before:
+                Color:
+                    rgba: app.get_color('bg_card')
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [15, 15, 15, 15]
+            
+            Label:
+                text: '🧠 Brain Trainer'
+                font_size: '38sp'
+                bold: True
+                color: app.get_color('accent')
         
+        # Statistics card
         BoxLayout:
             orientation: 'vertical'
             size_hint_y: 0.5
-            padding: 10
+            padding: 20
+            canvas.before:
+                Color:
+                    rgba: app.get_color('bg_card')
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [20, 20, 20, 20]
             
             Label:
-                text: 'Statistics'
-                font_size: '24sp'
+                text: '📊 Statistics'
+                font_size: '26sp'
                 size_hint_y: 0.2
                 bold: True
+                color: app.get_color('text_primary')
             
             Label:
                 text: root.stats_text
-                font_size: '18sp'
+                font_size: '20sp'
                 size_hint_y: 0.8
+                color: app.get_color('text_primary')
         
+        # Action buttons
         BoxLayout:
             orientation: 'vertical'
             size_hint_y: 0.3
-            spacing: 10
+            spacing: 15
             
             Button:
-                text: 'New Training'
-                font_size: '20sp'
+                text: '▶ New Training'
+                font_size: '22sp'
+                bold: True
+                background_normal: ''
+                background_color: app.get_color('button_bg')
+                color: app.get_color('button_text')
+                size_hint_y: 0.5
+                canvas.before:
+                    Color:
+                        rgba: self.background_color if self.state == 'normal' else [c * 0.8 for c in self.background_color]
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [12, 12, 12, 12]
                 on_press: app.root.current = 'new_train'
             
             Button:
-                text: 'Settings'
-                font_size: '20sp'
+                text: '⚙ Settings'
+                font_size: '22sp'
+                bold: True
+                background_normal: ''
+                background_color: app.get_color('button_bg_alt')
+                color: app.get_color('button_text')
+                size_hint_y: 0.5
+                canvas.before:
+                    Color:
+                        rgba: self.background_color if self.state == 'normal' else [c * 0.8 for c in self.background_color]
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [12, 12, 12, 12]
                 on_press: app.root.current = 'settings'
 
-
 <NewTrainScreen>:
+    canvas.before:
+        Color:
+            rgba: app.get_color('bg_primary')
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    
     BoxLayout:
         orientation: 'vertical'
-        padding: 20
+        padding: 30
         spacing: 20
         
-        Label:
-            text: 'New Training Session'
-            font_size: '28sp'
-            size_hint_y: 0.15
-            bold: True
+        # Title
+        BoxLayout:
+            size_hint_y: 0.12
+            canvas.before:
+                Color:
+                    rgba: app.get_color('bg_card')
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [15, 15, 15, 15]
+            
+            Label:
+                text: '🎯 New Training Session'
+                font_size: '30sp'
+                bold: True
+                color: app.get_color('accent')
         
+        # Settings card
         BoxLayout:
             orientation: 'vertical'
-            size_hint_y: 0.7
+            size_hint_y: 0.73
             spacing: 15
+            padding: 25
+            canvas.before:
+                Color:
+                    rgba: app.get_color('bg_card')
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [20, 20, 20, 20]
             
             Label:
                 text: 'Select Difficulty:'
-                font_size: '20sp'
-                size_hint_y: 0.15
+                font_size: '22sp'
+                size_hint_y: 0.12
+                color: app.get_color('text_primary')
+                bold: True
             
             Spinner:
                 id: difficulty_spinner
                 text: 'Easy'
                 values: ['Easy', 'Medium', 'Hard', 'Custom']
-                font_size: '18sp'
-                size_hint_y: 0.15
+                font_size: '20sp'
+                size_hint_y: 0.12
+                background_normal: ''
+                background_color: app.get_color('bg_secondary')
+                color: app.get_color('text_primary')
                 on_text: root.set_difficulty(self.text)
+                canvas.before:
+                    Color:
+                        rgba: app.get_color('bg_secondary')
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [10, 10, 10, 10]
             
             Label:
-                text: 'Time per question (seconds):'
-                font_size: '20sp'
-                size_hint_y: 0.15
+                text: '⏱ Time per question (seconds):'
+                font_size: '22sp'
+                size_hint_y: 0.12
+                color: app.get_color('text_primary')
+                bold: True
             
             TextInput:
                 id: time_input
                 text: '10'
                 multiline: False
                 input_filter: 'int'
-                font_size: '18sp'
-                size_hint_y: 0.15
+                font_size: '20sp'
+                size_hint_y: 0.12
+                background_normal: ''
+                background_color: app.get_color('bg_secondary')
+                foreground_color: app.get_color('text_primary')
+                cursor_color: app.get_color('accent')
                 on_text: root.set_time(self.text)
+                padding: [15, 10]
+                canvas.before:
+                    Color:
+                        rgba: app.get_color('bg_secondary')
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [10, 10, 10, 10]
             
             BoxLayout:
                 id: custom_range_box
                 orientation: 'vertical'
-                size_hint_y: 0.4
+                size_hint_y: 0.52
                 spacing: 10
                 opacity: 1 if difficulty_spinner.text == 'Custom' else 0
                 disabled: difficulty_spinner.text != 'Custom'
                 
                 Label:
                     text: 'Custom Range'
-                    font_size: '18sp'
+                    font_size: '20sp'
+                    color: app.get_color('text_primary')
+                    bold: True
                 
                 BoxLayout:
                     spacing: 10
@@ -106,6 +213,7 @@
                     Label:
                         text: 'Min:'
                         size_hint_x: 0.2
+                        color: app.get_color('text_primary')
                     
                     TextInput:
                         id: min_range_input
@@ -113,10 +221,23 @@
                         multiline: False
                         input_filter: 'int'
                         size_hint_x: 0.3
+                        background_normal: ''
+                        background_color: app.get_color('bg_secondary')
+                        foreground_color: app.get_color('text_primary')
+                        cursor_color: app.get_color('accent')
+                        padding: [10, 8]
+                        canvas.before:
+                            Color:
+                                rgba: app.get_color('bg_secondary')
+                            RoundedRectangle:
+                                pos: self.pos
+                                size: self.size
+                                radius: [8, 8, 8, 8]
                     
                     Label:
                         text: 'Max:'
                         size_hint_x: 0.2
+                        color: app.get_color('text_primary')
                     
                     TextInput:
                         id: max_range_input
@@ -124,118 +245,340 @@
                         multiline: False
                         input_filter: 'int'
                         size_hint_x: 0.3
+                        background_normal: ''
+                        background_color: app.get_color('bg_secondary')
+                        foreground_color: app.get_color('text_primary')
+                        cursor_color: app.get_color('accent')
+                        padding: [10, 8]
+                        canvas.before:
+                            Color:
+                                rgba: app.get_color('bg_secondary')
+                            RoundedRectangle:
+                                pos: self.pos
+                                size: self.size
+                                radius: [8, 8, 8, 8]
         
+        # Action buttons
         BoxLayout:
             orientation: 'horizontal'
             size_hint_y: 0.15
-            spacing: 10
+            spacing: 15
             
             Button:
-                text: 'Back'
-                font_size: '20sp'
+                text: '◀ Back'
+                font_size: '22sp'
+                bold: True
+                background_normal: ''
+                background_color: app.get_color('button_bg_alt')
+                color: app.get_color('button_text')
+                canvas.before:
+                    Color:
+                        rgba: self.background_color if self.state == 'normal' else [c * 0.8 for c in self.background_color]
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [12, 12, 12, 12]
                 on_press: app.root.current = 'main'
             
             Button:
-                text: 'Start Training'
-                font_size: '20sp'
+                text: '▶ Start Training'
+                font_size: '22sp'
+                bold: True
+                background_normal: ''
+                background_color: app.get_color('button_bg')
+                color: app.get_color('button_text')
+                canvas.before:
+                    Color:
+                        rgba: self.background_color if self.state == 'normal' else [c * 0.8 for c in self.background_color]
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [12, 12, 12, 12]
                 on_press: root.start_training()
 
 
 <TrainingScreen>:
+    canvas.before:
+        Color:
+            rgba: app.get_color('bg_primary')
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    
     BoxLayout:
         orientation: 'vertical'
-        padding: 20
+        padding: 30
         spacing: 20
         
+        # Timer and Score bar
         BoxLayout:
             orientation: 'horizontal'
-            size_hint_y: 0.15
+            size_hint_y: 0.12
+            spacing: 15
+            
+            BoxLayout:
+                canvas.before:
+                    Color:
+                        rgba: app.get_color('bg_card')
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [12, 12, 12, 12]
+                Label:
+                    text: '⏱ ' + root.timer_text
+                    font_size: '24sp'
+                    size_hint_x: 0.5
+                    bold: True
+                    color: app.get_color('accent')
+            
+            BoxLayout:
+                canvas.before:
+                    Color:
+                        rgba: app.get_color('bg_card')
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [12, 12, 12, 12]
+                Label:
+                    text: '🎯 ' + root.score_text
+                    font_size: '24sp'
+                    size_hint_x: 0.5
+                    bold: True
+                    color: app.get_color('accent')
+        
+        # Question card
+        BoxLayout:
+            size_hint_y: 0.38
+            padding: 20
+            canvas.before:
+                Color:
+                    rgba: app.get_color('bg_card')
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [20, 20, 20, 20]
             
             Label:
-                text: root.timer_text
-                font_size: '24sp'
-                size_hint_x: 0.5
-            
-            Label:
-                text: root.score_text
-                font_size: '24sp'
-                size_hint_x: 0.5
+                text: root.question_text
+                font_size: '52sp'
+                bold: True
+                color: app.get_color('text_primary')
         
-        Label:
-            text: root.question_text
-            font_size: '48sp'
-            size_hint_y: 0.4
-            bold: True
-        
-        TextInput:
-            id: answer_input
-            hint_text: 'Enter your answer'
-            multiline: False
-            input_filter: 'int'
-            font_size: '32sp'
+        # Answer input
+        BoxLayout:
             size_hint_y: 0.2
-            on_text_validate:
-                root.check_answer(self.text)
-                self.text = ''
+            padding: [0, 10]
+            
+            TextInput:
+                id: answer_input
+                hint_text: 'Enter your answer'
+                hint_text_color: app.get_color('text_secondary')
+                multiline: False
+                input_filter: 'int'
+                font_size: '36sp'
+                background_normal: ''
+                background_color: app.get_color('bg_card')
+                foreground_color: app.get_color('text_primary')
+                cursor_color: app.get_color('accent')
+                padding: [20, 15]
+                on_text_validate:
+                    root.check_answer(self.text)
+                    self.text = ''
+                canvas.before:
+                    Color:
+                        rgba: app.get_color('bg_card')
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [15, 15, 15, 15]
+                    Color:
+                        rgba: app.get_color('accent')
+                    Line:
+                        rounded_rectangle: [self.x, self.y, self.width, self.height, 15, 15, 15, 15]
+                        width: 2
         
+        # Action buttons
         BoxLayout:
             orientation: 'horizontal'
             size_hint_y: 0.15
-            spacing: 10
+            spacing: 15
             
             Button:
-                text: 'Submit'
-                font_size: '24sp'
+                text: '✓ Submit'
+                font_size: '26sp'
+                bold: True
+                background_normal: ''
+                background_color: app.get_color('button_bg')
+                color: app.get_color('button_text')
+                canvas.before:
+                    Color:
+                        rgba: self.background_color if self.state == 'normal' else [c * 0.8 for c in self.background_color]
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [12, 12, 12, 12]
                 on_press:
                     root.check_answer(answer_input.text)
                     answer_input.text = ''
             
             Button:
-                text: 'End Training'
-                font_size: '24sp'
+                text: '✕ End Training'
+                font_size: '26sp'
+                bold: True
+                background_normal: ''
+                background_color: [0.9, 0.3, 0.3, 1]
+                color: app.get_color('button_text')
+                canvas.before:
+                    Color:
+                        rgba: self.background_color if self.state == 'normal' else [c * 0.8 for c in self.background_color]
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [12, 12, 12, 12]
                 on_press: root.end_training_session()
 
 
 <SettingsScreen>:
+    canvas.before:
+        Color:
+            rgba: app.get_color('bg_primary')
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    
     BoxLayout:
         orientation: 'vertical'
-        padding: 20
+        padding: 30
         spacing: 20
         
-        Label:
-            text: 'Settings'
-            font_size: '28sp'
-            size_hint_y: 0.15
-            bold: True
-        
+        # Title
         BoxLayout:
-            orientation: 'vertical'
-            size_hint_y: 0.7
-            spacing: 20
-            padding: 10
-            
-            BoxLayout:
-                orientation: 'horizontal'
-                size_hint_y: 0.3
-                
-                Label:
-                    text: 'Enable Voice (Text-to-Speech):'
-                    font_size: '20sp'
-                    size_hint_x: 0.7
-                
-                CheckBox:
-                    size_hint_x: 0.3
-                    active: app.voice_enabled
-                    on_active: app.voice_enabled = self.active
+            size_hint_y: 0.12
+            canvas.before:
+                Color:
+                    rgba: app.get_color('bg_card')
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [15, 15, 15, 15]
             
             Label:
-                text: 'Voice feature will speak the question\nif enabled and supported on your system.'
-                font_size: '16sp'
-                size_hint_y: 0.7
-                color: 0.7, 0.7, 0.7, 1
+                text: '⚙ Settings'
+                font_size: '30sp'
+                bold: True
+                color: app.get_color('accent')
         
+        # Settings card
+        BoxLayout:
+            orientation: 'vertical'
+            size_hint_y: 0.73
+            spacing: 25
+            padding: 25
+            canvas.before:
+                Color:
+                    rgba: app.get_color('bg_card')
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [20, 20, 20, 20]
+            
+            # Theme toggle
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: 0.35
+                spacing: 10
+                
+                BoxLayout:
+                    orientation: 'horizontal'
+                    size_hint_y: 0.5
+                    
+                    Label:
+                        text: '🌓 Theme Mode:'
+                        font_size: '22sp'
+                        size_hint_x: 0.6
+                        halign: 'left'
+                        text_size: self.size
+                        color: app.get_color('text_primary')
+                        bold: True
+                    
+                    Button:
+                        text: 'Light' if app.theme_mode == 'light' else 'Dark'
+                        size_hint_x: 0.4
+                        font_size: '20sp'
+                        bold: True
+                        background_normal: ''
+                        background_color: app.get_color('accent')
+                        color: app.get_color('button_text')
+                        on_press: app.toggle_theme()
+                        canvas.before:
+                            Color:
+                                rgba: self.background_color if self.state == 'normal' else [c * 0.8 for c in self.background_color]
+                            RoundedRectangle:
+                                pos: self.pos
+                                size: self.size
+                                radius: [10, 10, 10, 10]
+                
+                Label:
+                    text: 'Toggle between light and dark themes'
+                    font_size: '16sp'
+                    size_hint_y: 0.5
+                    color: app.get_color('text_secondary')
+                    halign: 'left'
+                    text_size: self.size
+                    padding: [10, 0]
+            
+            # Voice toggle
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: 0.35
+                spacing: 10
+                
+                BoxLayout:
+                    orientation: 'horizontal'
+                    size_hint_y: 0.5
+                    
+                    Label:
+                        text: '🔊 Enable Voice (Text-to-Speech):'
+                        font_size: '22sp'
+                        size_hint_x: 0.7
+                        halign: 'left'
+                        text_size: self.size
+                        color: app.get_color('text_primary')
+                        bold: True
+                    
+                    CheckBox:
+                        size_hint_x: 0.3
+                        active: app.voice_enabled
+                        color: app.get_color('accent')
+                        on_active: app.voice_enabled = self.active
+                
+                Label:
+                    text: 'Voice feature will speak the question if enabled and supported on your system'
+                    font_size: '16sp'
+                    size_hint_y: 0.5
+                    color: app.get_color('text_secondary')
+                    halign: 'left'
+                    text_size: self.size
+                    padding: [10, 0]
+            
+            # Spacer
+            Widget:
+                size_hint_y: 0.3
+        
+        # Back button
         Button:
-            text: 'Back to Main Menu'
-            font_size: '20sp'
+            text: '◀ Back to Main Menu'
+            font_size: '22sp'
             size_hint_y: 0.15
+            bold: True
+            background_normal: ''
+            background_color: app.get_color('button_bg')
+            color: app.get_color('button_text')
+            canvas.before:
+                Color:
+                    rgba: self.background_color if self.state == 'normal' else [c * 0.8 for c in self.background_color]
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [12, 12, 12, 12]
             on_press: app.root.current = 'main'
