@@ -145,6 +145,11 @@ class TrainingScreen(Screen):
         self.timer_event = None
         self.current_sound = None
         self.current_temp_file = None
+        # Track question history for results screen
+        self.question_history = []
+        # Track time for each question
+        self.question_start_time = None
+        self.unlimited_timer_event = None
     
     def setup_training(self, difficulty, time_per_question):
         """Setup training parameters."""
@@ -153,6 +158,7 @@ class TrainingScreen(Screen):
         self.remaining_time = time_per_question
         self.total_questions = 0
         self.correct_answers = 0
+        self.question_history = []  # Reset history for new session
         
         # Set number ranges based on difficulty
         if difficulty == "Easy":
@@ -177,6 +183,7 @@ class TrainingScreen(Screen):
         self.remaining_time = time_per_question
         self.total_questions = 0
         self.correct_answers = 0
+        self.question_history = []  # Reset history for new session
         
         self.generate_question()
         self.start_timer()
@@ -189,6 +196,9 @@ class TrainingScreen(Screen):
         
         self.question_text = f"{self.current_num1} x {self.current_num2} = ?"
         self.score_text = f"Score: {self.correct_answers}/{self.total_questions}"
+        
+        # Start tracking time for this question
+        self.question_start_time = time.time()
         
         # Clean up previous audio if still playing
         if self.current_sound:
@@ -246,16 +256,23 @@ class TrainingScreen(Screen):
         
         # Handle unlimited time mode
         if self.time_per_question == UNLIMITED_TIME:
-            self.timer_text = "Time: ∞"
-            # Don't start a countdown timer
+            self.timer_text = "Time: 0s"
+            # Don't start a countdown timer, but start counting up
             if self.timer_event:
                 self.timer_event.cancel()
+            # Start counting up for unlimited mode
+            if self.unlimited_timer_event:
+                self.unlimited_timer_event.cancel()
+            self.unlimited_timer_event = Clock.schedule_interval(self.update_unlimited_timer, 1)
             return
         
         self.timer_text = f"Time: {self.remaining_time}"
         
         if self.timer_event:
             self.timer_event.cancel()
+        
+        if self.unlimited_timer_event:
+            self.unlimited_timer_event.cancel()
         
         self.timer_event = Clock.schedule_interval(self.update_timer, 1)
     
@@ -267,10 +284,21 @@ class TrainingScreen(Screen):
         if self.remaining_time <= 0:
             self.check_answer("")
     
+    def update_unlimited_timer(self, dt):
+        """Update the count-up timer for unlimited mode."""
+        if self.question_start_time:
+            elapsed = int(time.time() - self.question_start_time)
+            self.timer_text = f"Time: {elapsed}s"
+    
     def check_answer(self, answer):
         """Check the user's answer."""
         if self.timer_event:
             self.timer_event.cancel()
+        if self.unlimited_timer_event:
+            self.unlimited_timer_event.cancel()
+        
+        # Calculate time taken for this question
+        time_taken = time.time() - self.question_start_time if self.question_start_time else 0
         
         self.total_questions += 1
         
@@ -279,8 +307,21 @@ class TrainingScreen(Screen):
         except ValueError:
             user_answer = -1
         
-        if user_answer == self.correct_answer:
+        is_correct = user_answer == self.correct_answer
+        
+        if is_correct:
             self.correct_answers += 1
+        
+        # Save question history
+        self.question_history.append({
+            'question': f"{self.current_num1} x {self.current_num2}",
+            'user_answer': answer if answer else "(no answer)",
+            'correct_answer': self.correct_answer,
+            'is_correct': is_correct,
+            'time_taken': time_taken
+        })
+        
+        if is_correct:
             # For correct answers, automatically go to next question without popup
             # This provides faster feedback and keeps the training flow smooth
             self.generate_question()
@@ -357,6 +398,8 @@ class TrainingScreen(Screen):
         """End the training session and save results."""
         if self.timer_event:
             self.timer_event.cancel()
+        if self.unlimited_timer_event:
+            self.unlimited_timer_event.cancel()
         
         # Clean up audio
         if self.current_sound:
@@ -374,9 +417,15 @@ class TrainingScreen(Screen):
                 self.time_per_question
             )
         
-        # Return to main screen
+        # Navigate to results screen
         app = App.get_running_app()
-        app.root.current = 'main'
+        results_screen = app.root.get_screen('results')
+        results_screen.show_results(
+            self.question_history,
+            self.correct_answers,
+            self.total_questions
+        )
+        app.root.current = 'results'
     
     def on_enter(self):
         """Called when entering the screen."""
@@ -394,6 +443,8 @@ class TrainingScreen(Screen):
         Window.unbind(on_keyboard=self.handle_keyboard)
         if self.timer_event:
             self.timer_event.cancel()
+        if self.unlimited_timer_event:
+            self.unlimited_timer_event.cancel()
         
         # Clean up audio
         if self.current_sound:
@@ -417,6 +468,46 @@ class SettingsScreen(Screen):
         self.custom_min = 0
         self.custom_max = 10
         self.custom_time = 10
+
+
+class ResultsScreen(Screen):
+    """Results screen to show training summary."""
+    
+    results_text = StringProperty("")
+    
+    def show_results(self, question_history, correct_answers, total_questions):
+        """Display results from training session."""
+        # Calculate total time
+        total_time = sum(q['time_taken'] for q in question_history)
+        
+        # Build results text
+        results = []
+        results.append("=" * 50)
+        results.append("TRAINING RESULTS")
+        results.append("=" * 50)
+        
+        if total_questions > 0:
+            accuracy = correct_answers / total_questions * 100
+            average_time = total_time / total_questions
+            results.append(f"\nScore: {correct_answers}/{total_questions} ({accuracy:.1f}%)")
+            results.append(f"Total Time: {total_time:.1f} seconds")
+            results.append(f"Average Time per Question: {average_time:.1f}s\n")
+        else:
+            results.append("\nNo questions answered in this session.\n")
+        
+        results.append("=" * 50)
+        results.append("QUESTION DETAILS")
+        results.append("=" * 50)
+        
+        for i, q in enumerate(question_history, 1):
+            status = "✓" if q['is_correct'] else "✗"
+            results.append(f"\n{i}. {q['question']} = ?")
+            results.append(f"   Your answer: {q['user_answer']}")
+            results.append(f"   Correct answer: {q['correct_answer']}")
+            results.append(f"   Time: {q['time_taken']:.1f}s")
+            results.append(f"   {status} {'Correct' if q['is_correct'] else 'Incorrect'}")
+        
+        self.results_text = "\n".join(results)
 
 
 class BrainTrainerApp(App):
@@ -510,6 +601,7 @@ class BrainTrainerApp(App):
         sm.add_widget(NewTrainScreen(name='new_train'))
         sm.add_widget(TrainingScreen(name='training'))
         sm.add_widget(SettingsScreen(name='settings'))
+        sm.add_widget(ResultsScreen(name='results'))
         
         return sm
 
