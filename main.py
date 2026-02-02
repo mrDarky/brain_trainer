@@ -485,9 +485,16 @@ class ResultsScreen(Screen):
         results.append("=" * 50)
         results.append("TRAINING RESULTS")
         results.append("=" * 50)
-        results.append(f"\nScore: {correct_answers}/{total_questions} ({correct_answers/total_questions*100:.1f}%)")
-        results.append(f"Total Time: {total_time:.1f} seconds")
-        results.append(f"Average Time per Question: {total_time/total_questions:.1f}s\n")
+        
+        if total_questions > 0:
+            accuracy = correct_answers / total_questions * 100
+            average_time = total_time / total_questions
+            results.append(f"\nScore: {correct_answers}/{total_questions} ({accuracy:.1f}%)")
+            results.append(f"Total Time: {total_time:.1f} seconds")
+            results.append(f"Average Time per Question: {average_time:.1f}s\n")
+        else:
+            results.append("\nNo questions answered in this session.\n")
+        
         results.append("=" * 50)
         results.append("QUESTION DETAILS")
         results.append("=" * 50)
