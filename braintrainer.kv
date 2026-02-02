@@ -166,25 +166,22 @@
                         radius: [10, 10, 10, 10]
             
             Label:
-                text: '⏱ Time per question (seconds):'
+                text: '⏱ Time per question:'
                 font_size: '22sp'
                 size_hint_y: 0.12
                 color: app.get_color('text_primary')
                 bold: True
             
-            TextInput:
-                id: time_input
-                text: '10'
-                multiline: False
-                input_filter: 'int'
+            Spinner:
+                id: time_spinner
+                text: '10 seconds'
+                values: ['5 seconds', '10 seconds', '15 seconds', '20 seconds', '30 seconds', '60 seconds', 'Unlimited']
                 font_size: '20sp'
                 size_hint_y: 0.12
                 background_normal: ''
                 background_color: app.get_color('bg_secondary')
-                foreground_color: app.get_color('text_primary')
-                cursor_color: app.get_color('accent')
+                color: app.get_color('text_primary')
                 on_text: root.set_time(self.text)
-                padding: [15, 10]
                 canvas.before:
                     Color:
                         rgba: app.get_color('bg_secondary')

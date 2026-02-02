@@ -41,6 +41,9 @@ KEYCODE_ESCAPE = 27
 # UI timing constants
 FOCUS_DELAY = 0.1  # Small delay to ensure UI is ready before setting focus
 
+# Unlimited time constant
+UNLIMITED_TIME = 0  # 0 means unlimited time (no countdown timer)
+
 # Text-to-speech support
 try:
     from gtts import gTTS
@@ -88,8 +91,12 @@ class NewTrainScreen(Screen):
     def set_time(self, time_str):
         """Set time per question."""
         try:
-            self.time_per_question = int(time_str)
-        except ValueError:
+            if time_str == 'Unlimited':
+                self.time_per_question = UNLIMITED_TIME
+            else:
+                # Extract number from "X seconds" format
+                self.time_per_question = int(time_str.split()[0])
+        except (ValueError, IndexError):
             self.time_per_question = 10
     
     def start_training(self):
@@ -236,6 +243,15 @@ class TrainingScreen(Screen):
     def start_timer(self):
         """Start the countdown timer."""
         self.remaining_time = self.time_per_question
+        
+        # Handle unlimited time mode
+        if self.time_per_question == UNLIMITED_TIME:
+            self.timer_text = "Time: ∞"
+            # Don't start a countdown timer
+            if self.timer_event:
+                self.timer_event.cancel()
+            return
+        
         self.timer_text = f"Time: {self.remaining_time}"
         
         if self.timer_event:
@@ -436,6 +452,17 @@ class BrainTrainerApp(App):
             'border': [0.25, 0.25, 0.28, 1],           # Dark border
         }
     })
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Bind to theme_mode changes to update UI reactively
+        self.bind(theme_mode=self._on_theme_mode_change)
+    
+    def _on_theme_mode_change(self, *args):
+        """Called when theme_mode changes to trigger UI updates."""
+        # Force the theme_colors property to notify all bindings in KV file
+        # This ensures all app.get_color() calls are re-evaluated
+        self.property('theme_colors').dispatch(self)
     
     def get_color(self, color_key):
         """Get color for the current theme."""
