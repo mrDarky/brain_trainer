@@ -41,6 +41,9 @@ KEYCODE_ESCAPE = 27
 # UI timing constants
 FOCUS_DELAY = 0.1  # Small delay to ensure UI is ready before setting focus
 
+# Unlimited time constant
+UNLIMITED_TIME = 0  # 0 means unlimited time (no countdown timer)
+
 # Text-to-speech support
 try:
     from gtts import gTTS
@@ -89,7 +92,7 @@ class NewTrainScreen(Screen):
         """Set time per question."""
         try:
             if time_str == 'Unlimited':
-                self.time_per_question = 0  # 0 means unlimited
+                self.time_per_question = UNLIMITED_TIME
             else:
                 # Extract number from "X seconds" format
                 self.time_per_question = int(time_str.split()[0])
@@ -242,7 +245,7 @@ class TrainingScreen(Screen):
         self.remaining_time = self.time_per_question
         
         # Handle unlimited time mode
-        if self.time_per_question == 0:
+        if self.time_per_question == UNLIMITED_TIME:
             self.timer_text = "Time: ∞"
             # Don't start a countdown timer
             if self.timer_event:
@@ -452,13 +455,13 @@ class BrainTrainerApp(App):
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # Bind to theme_mode changes to update derived color properties
-        self.bind(theme_mode=self._update_colors)
-        self._update_colors()
+        # Bind to theme_mode changes to update UI reactively
+        self.bind(theme_mode=self._on_theme_mode_change)
     
-    def _update_colors(self, *args):
-        """Update all color properties when theme changes."""
-        # Trigger property changes for each color
+    def _on_theme_mode_change(self, *args):
+        """Called when theme_mode changes to trigger UI updates."""
+        # Force the theme_colors property to notify all bindings in KV file
+        # This ensures all app.get_color() calls are re-evaluated
         self.property('theme_colors').dispatch(self)
     
     def get_color(self, color_key):
