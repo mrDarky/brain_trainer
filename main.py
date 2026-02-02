@@ -88,8 +88,12 @@ class NewTrainScreen(Screen):
     def set_time(self, time_str):
         """Set time per question."""
         try:
-            self.time_per_question = int(time_str)
-        except ValueError:
+            if time_str == 'Unlimited':
+                self.time_per_question = 0  # 0 means unlimited
+            else:
+                # Extract number from "X seconds" format
+                self.time_per_question = int(time_str.split()[0])
+        except (ValueError, IndexError):
             self.time_per_question = 10
     
     def start_training(self):
@@ -236,6 +240,15 @@ class TrainingScreen(Screen):
     def start_timer(self):
         """Start the countdown timer."""
         self.remaining_time = self.time_per_question
+        
+        # Handle unlimited time mode
+        if self.time_per_question == 0:
+            self.timer_text = "Time: ∞"
+            # Don't start a countdown timer
+            if self.timer_event:
+                self.timer_event.cancel()
+            return
+        
         self.timer_text = f"Time: {self.remaining_time}"
         
         if self.timer_event:
@@ -436,6 +449,17 @@ class BrainTrainerApp(App):
             'border': [0.25, 0.25, 0.28, 1],           # Dark border
         }
     })
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Bind to theme_mode changes to update derived color properties
+        self.bind(theme_mode=self._update_colors)
+        self._update_colors()
+    
+    def _update_colors(self, *args):
+        """Update all color properties when theme changes."""
+        # Trigger property changes for each color
+        self.property('theme_colors').dispatch(self)
     
     def get_color(self, color_key):
         """Get color for the current theme."""
